@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+  <!-- Added for fully responsive web -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" src="//normalize-css.googlecode.com/svn/trunk/normalize.css" />
   <link rel="stylesheet" href="css/styles.css">
   <title>Restaurant Reviews</title>
@@ -9,35 +11,43 @@
 
 <body>
   <header>
-    <nav>
-      <h1><a href="/">Restaurant Reviews</a></h1>
+    <nav role="navigation">
+      <h1><a href="/" id="home-link" tabindex="0">Restaurant Reviews</a></h1>
     </nav>
   </header>
 
-  <main id="maincontent">
-    <section id="map-container">
-      <div id="map"></div>
+  <main id="maincontent" role="main">
+    <!-- Beginning map -->
+    <section id="map-container" role="region" aria-hidden="true">
+      <div id="map" role="presentation" ></div>
     </section>
-    <section>
+    <!-- End map -->
+    <!-- Beginning restaurant list -->
+    <section role="region">
       <div class="filter-options">
-        <h2>Filter Results</h2>
-        <select id="neighborhoods-select" name="neighborhoods" onchange="updateRestaurants()">
-          <option value="all">All Neighborhoods</option>
-        </select>
-        <select id="cuisines-select" name="cuisines" onchange="updateRestaurants()">
-          <option value="all">All Cuisines</option>
-        </select>
+        <div>
+          <h2 id="filter-results" tabindex="1">Filter Results</h2>
+        </div>
+        <div>
+          <select id="neighborhoods-select" tabindex="2" name="neighborhoods" onchange="updateRestaurants()">
+            <option value="all" >All Neighborhoods</option>
+          </select>
+          <select id="cuisines-select" tabindex="3" name="cuisines" onchange="updateRestaurants()">
+            <option value="all" >All Cuisines</option>
+          </select>
+        </div>
       </div>
-      <ul id="restaurants-list"></ul>
+      <ul id="restaurants-list" tabindex="4"></ul>
     </section>
+    <!-- End restaurant list -->
   </main>
 
   <script type="application/javascript" charset="utf-8" src="js/dbhelper.js"></script>
   <script type="application/javascript" charset="utf-8" src="js/main.js"></script>
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&callback=initMap"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAeyrDaUdSBVnbSnTT_iAgxs3N0k8D0DRQ&libraries=places&callback=initMap"></script>
 
 
-  <footer id="footer">
+  <footer id="footer" role="contentinfo">
     Copyright (c) 2017 <a href="/"><strong>Restaurant Reviews</strong></a> All Rights Reserved.
   </footer>
 

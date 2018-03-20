@@ -3,6 +3,33 @@ let restaurants,
   cuisines
 var map
 var markers = []
+var index = 0
+navigator.serviceWorker.register('js/sw.js').then(function(reg) {  
+  console.log('Service worker registered.');
+  if (!navigator.serviceWorker.controller) return;  
+  if (reg.waiting) navigator.serviceWorker.controller.postMessage({action: 'skipWaiting'});  
+  if (reg.installing) {    
+    navigator.serviceWorker.addEventListener('statechange', function() {
+      if (navigator.serviceWorker.controller.state == 'installed') {
+        navigator.serviceWorker.controller.postMessage({action: 'skipWaiting'});      
+      }    
+    });  
+  }  
+  reg.addEventListener('updatefound', function() {    
+    navigator.serviceWorker.addEventListener('statechange', function() {      
+      if (navigator.serviceWorker.controller.state == 'installed') {        
+        navigator.serviceWorker.controller.postMessage({action: 'skipWaiting'});      
+      }    
+    });  
+  });
+}).catch(function() {  
+  console.log('Service worker registration failed');});  
+  var refreshing;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {  
+    if (refreshing) return;  
+    window.location.reload();  
+    refreshing = true;
+  })
 
 /**
  * Fetch neighborhoods and cuisines as soon as the page is loaded.
@@ -80,6 +107,7 @@ window.initMap = () => {
     center: loc,
     scrollwheel: false
   });
+  document.getElementById('map').setAttribute('aria-hidden', 'true');
   updateRestaurants();
 }
 
@@ -89,19 +117,29 @@ window.initMap = () => {
 updateRestaurants = () => {
   const cSelect = document.getElementById('cuisines-select');
   const nSelect = document.getElementById('neighborhoods-select');
+  const rList = document.getElementById('restaurants-list');
 
   const cIndex = cSelect.selectedIndex;
   const nIndex = nSelect.selectedIndex;
 
   const cuisine = cSelect[cIndex].value;
   const neighborhood = nSelect[nIndex].value;
+  
+  index = parseInt(rList.getAttribute('tabindex')) + 1;
 
   DBHelper.fetchRestaurantByCuisineAndNeighborhood(cuisine, neighborhood, (error, restaurants) => {
     if (error) { // Got an error!
       console.error(error);
     } else {
+      if(restaurants == null || restaurants.length == 0)
+        rList.setAttribute('aria-label',`There is no restaurant that matches the search criteria.`);
+      else if (restaurants.length == 1)
+        rList.setAttribute('aria-label',`There is 1 restaurant that matches the search criteria.`);
+      else
+        rList.setAttribute('aria-label',`There are ${restaurants.length} restaurants that match the search criteria.`);
       resetRestaurants(restaurants);
       fillRestaurantsHTML();
+      document.getElementById('footer').setAttribute('tabindex', index);
     }
   })
 }
@@ -158,6 +196,9 @@ createRestaurantHTML = (restaurant) => {
   const more = document.createElement('a');
   more.innerHTML = 'View Details';
   more.href = DBHelper.urlForRestaurant(restaurant);
+  more.setAttribute('aria-label', `Click to check the info of ${restaurant.name}`);
+  more.setAttribute('tabindex',index);
+  index++;
   li.append(more)
 
   return li
@@ -175,4 +216,45 @@ addMarkersToMap = (restaurants = self.restaurants) => {
     });
     self.markers.push(marker);
   });
+}
+
+document.onkeydown = CaptureTabKeyEventsMain;
+
+function CaptureTabKeyEventsMain(evt) {
+  var evt = (evt) ? evt : ((event) ? event : null);
+  var tabKey = 9;
+  var activeElemId = document.activeElement.id;
+  console.log(activeElemId);
+  //shift was down when tab was pressed
+  if(evt.shiftKey && evt.keyCode == tabKey &&
+    (activeElemId == 'home-link'
+      || activeElemId == 'filter-results')) {
+    event.preventDefault();
+    
+    switch(activeElemId) {
+      case 'home-link':
+        document.getElementById('footer').focus();
+        break;
+      case 'filter-results':
+        document.getElementById('home-link').focus();
+        break;
+      default:
+        break;
+    }
+  }
+  else if(!evt.shiftKey && evt.keyCode == tabKey &&
+    (activeElemId == 'footer' 
+      || activeElemId == 'home-link')) {
+    event.preventDefault();
+
+    switch(activeElemId) {
+      case 'footer':
+        document.getElementById('home-link').focus();
+        break;
+      case 'home-link':
+        document.getElementById('filter-results').focus();
+        break;
+    }
+  }
+  
 }

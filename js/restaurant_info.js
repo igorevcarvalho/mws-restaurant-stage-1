@@ -1,6 +1,32 @@
 let restaurant;
 var map;
 
+navigator.serviceWorker.register('js/sw.js').then(function(reg) {  
+  console.log('Service worker registered.');
+  if (!navigator.serviceWorker.controller) return;  
+  if (reg.waiting) navigator.serviceWorker.controller.postMessage({action: 'skipWaiting'});  
+  if (reg.installing) {    
+    navigator.serviceWorker.addEventListener('statechange', function() {
+      if (navigator.serviceWorker.controller.state == 'installed') {
+        navigator.serviceWorker.controller.postMessage({action: 'skipWaiting'});      
+      }    
+    });  
+  }  
+  reg.addEventListener('updatefound', function() {    
+    navigator.serviceWorker.addEventListener('statechange', function() {      
+      if (navigator.serviceWorker.controller.state == 'installed') {        
+        navigator.serviceWorker.controller.postMessage({action: 'skipWaiting'});      
+      }    
+    });  
+  });
+}).catch(function() {  console.log('Service worker registration failed');});  
+  var refreshing;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {  
+    if (refreshing) return;  
+    window.location.reload();  
+    refreshing = true;
+  })
+
 /**
  * Initialize Google map, called from HTML.
  */
@@ -56,7 +82,9 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   address.innerHTML = restaurant.address;
 
   const image = document.getElementById('restaurant-img');
-  image.className = 'restaurant-img'
+  image.className = 'restaurant-img';
+  const id = getParameterByName('id');
+  image.alt = 'An image of ' + restaurant.name + ', a pleasant place to eat.';
   image.src = DBHelper.imageUrlForRestaurant(restaurant);
 
   const cuisine = document.getElementById('restaurant-cuisine');
@@ -94,29 +122,45 @@ fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hours) => 
  * Create all reviews HTML and add them to the webpage.
  */
 fillReviewsHTML = (reviews = self.restaurant.reviews) => {
+  var count = 0;
+  var index = parseInt(document.getElementById('restaurant-hours').getAttribute('tabindex')) + 1;
   const container = document.getElementById('reviews-container');
   const title = document.createElement('h2');
   title.innerHTML = 'Reviews';
   container.appendChild(title);
-
+  title.setAttribute('tabindex', index);
   if (!reviews) {
     const noReviews = document.createElement('p');
     noReviews.innerHTML = 'No reviews yet!';
     container.appendChild(noReviews);
+    title.setAttribute('aria-label',title.innerHTML + ' ' + noReviews.innerHTML);
     return;
   }
   const ul = document.getElementById('reviews-list');
+  
   reviews.forEach(review => {
-    ul.appendChild(createReviewHTML(review));
+    ul.appendChild(createReviewHTML(review, index));
+    count++;
+    index++;
   });
+  if(count == 1) {
+    title.setAttribute('aria-label',title.innerHTML + ' ( There is ' + count + ')');
+  }
+  else
+  {
+    title.setAttribute('aria-label',title.innerHTML + ' ( There are ' + count + ')');
+  }
   container.appendChild(ul);
+  document.getElementById('footer').setAttribute('tabindex', index);
 }
 
 /**
  * Create review HTML and add it to the webpage.
  */
-createReviewHTML = (review) => {
+createReviewHTML = (review, index) => {
   const li = document.createElement('li');
+  li.setAttribute('tabindex', index);
+
   const name = document.createElement('p');
   name.innerHTML = review.name;
   li.appendChild(name);
@@ -132,6 +176,8 @@ createReviewHTML = (review) => {
   const comments = document.createElement('p');
   comments.innerHTML = review.comments;
   li.appendChild(comments);
+  
+  li.setAttribute('aria-label',`A review from ${review.name} on ${review.date.replace(',','')}, rated ${review.rating} out of 5. ${review.comments}`);
 
   return li;
 }
@@ -160,4 +206,42 @@ getParameterByName = (name, url) => {
   if (!results[2])
     return '';
   return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+
+document.onkeydown = CaptureTabKeyEventsRestaurant;
+
+function CaptureTabKeyEventsRestaurant(evt) {
+  var evt = (evt) ? evt : ((event) ? event : null);
+  var tabKey = 9;
+  var activeElemId = document.activeElement.id;
+  //shift was down when tab was pressed
+  if(evt.shiftKey && evt.keyCode == tabKey &&
+    (activeElemId == 'home-link'
+      || activeElemId == 'restaurant-name')) {
+    event.preventDefault();
+    switch(activeElemId) {
+      case 'home-link':
+        document.getElementById('footer').focus();
+        break;
+      case 'restaurant-name':
+        document.getElementById('home-link').focus();
+        break;
+      default:
+        break;
+    }
+  }
+  else if(!evt.shiftKey && evt.keyCode == tabKey &&
+    (activeElemId == 'footer' 
+      || activeElemId == 'home-link')) {
+    event.preventDefault();
+    switch(activeElemId) {
+      case 'footer':
+        document.getElementById('home-link').focus();
+        break;
+      case 'home-link':
+        document.getElementById('restaurant-name').focus();
+        break;
+    }
+  }
+  
 }

@@ -4,32 +4,6 @@ let restaurants,
 var map
 var markers = []
 var index = 0
-navigator.serviceWorker.register('js/sw.js').then(function(reg) {  
-  console.log('Service worker registered.');
-  if (!navigator.serviceWorker.controller) return;  
-  if (reg.waiting) navigator.serviceWorker.controller.postMessage({action: 'skipWaiting'});  
-  if (reg.installing) {    
-    navigator.serviceWorker.addEventListener('statechange', function() {
-      if (navigator.serviceWorker.controller.state == 'installed') {
-        navigator.serviceWorker.controller.postMessage({action: 'skipWaiting'});      
-      }    
-    });  
-  }  
-  reg.addEventListener('updatefound', function() {    
-    navigator.serviceWorker.addEventListener('statechange', function() {      
-      if (navigator.serviceWorker.controller.state == 'installed') {        
-        navigator.serviceWorker.controller.postMessage({action: 'skipWaiting'});      
-      }    
-    });  
-  });
-}).catch(function() {  
-  console.log('Service worker registration failed');});  
-  var refreshing;
-  navigator.serviceWorker.addEventListener('controllerchange', function() {  
-    if (refreshing) return;  
-    window.location.reload();  
-    refreshing = true;
-  })
 
 /**
  * Fetch neighborhoods and cuisines as soon as the page is loaded.
@@ -178,19 +152,24 @@ createRestaurantHTML = (restaurant) => {
 
   const image = document.createElement('img');
   image.className = 'restaurant-img';
+  image.alt = 'An image of ' + restaurant.name + ', a pleasant place to eat.';
+  image.setAttribute('role', `img`);
   image.src = DBHelper.imageUrlForRestaurant(restaurant);
   li.append(image);
 
   const name = document.createElement('h1');
   name.innerHTML = restaurant.name;
+  name.setAttribute('role', `heading`);
   li.append(name);
 
   const neighborhood = document.createElement('p');
   neighborhood.innerHTML = restaurant.neighborhood;
+  neighborhood.setAttribute('role', `text`);
   li.append(neighborhood);
 
   const address = document.createElement('p');
   address.innerHTML = restaurant.address;
+  address.setAttribute('role', `text`);
   li.append(address);
 
   const more = document.createElement('a');
@@ -198,6 +177,7 @@ createRestaurantHTML = (restaurant) => {
   more.href = DBHelper.urlForRestaurant(restaurant);
   more.setAttribute('aria-label', `Click to check the info of ${restaurant.name}`);
   more.setAttribute('tabindex',index);
+  more.setAttribute('role', `button`);
   index++;
   li.append(more)
 

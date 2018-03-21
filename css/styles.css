@@ -203,6 +203,17 @@ nav h1 a {
   text-transform: uppercase;
 }
 
+@media screen and (min-width: 900px) {
+  #restaurants-list li {
+    width: 800px;
+    float: left;
+  }
+
+  #footer{
+    clear: both;
+  }
+}
+
 /* ====================== Restaurant Details ====================== */
 .inside header {
   position: fixed;

@@ -223,9 +223,17 @@ nav h1 a {
 }
 
 /* Desktop */
-@media screen and (min-width: 1024px) {
+@media screen and (min-width: 1024px) and (max-width: 1600px) {
   #restaurants-list li {
-    width: 230px;
+    width: calc(33% - 95px);
+    float: left;
+  }
+}
+
+/* Large Desktop */
+@media screen and (min-width: 1601px) {
+  #restaurants-list li {
+    width: 400px;
     float: left;
   }
 }

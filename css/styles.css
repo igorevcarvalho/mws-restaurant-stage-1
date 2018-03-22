@@ -48,6 +48,7 @@ article, aside, canvas, details, figcaption, figure, footer, header, hgroup, men
   text-align: center;
   text-transform: uppercase;
   width: 100%;
+  clear: both;
 }
 /* ====================== Navigation ====================== */
 nav {
@@ -152,6 +153,8 @@ nav h1 a {
   /* padding: 30px 15px 60px; */
   padding: 20px 15px;
   text-align: center;
+  display: flex;
+  flex-wrap: wrap;
 }
 #restaurants-list li {
   background-color: #fff;
@@ -203,14 +206,27 @@ nav h1 a {
   text-transform: uppercase;
 }
 
-@media screen and (min-width: 900px) {
+/* Mobile */
+@media screen and (max-width: 480px) {
   #restaurants-list li {
-    width: 800px;
+    width: calc(100% - 75px);
     float: left;
   }
+}
 
-  #footer{
-    clear: both;
+/* Tablet */
+@media screen and (min-width: 481px) and (max-width: 1023px) {
+  #restaurants-list li {
+    width: calc(50% - 95px);
+    float: left;
+  }
+}
+
+/* Desktop */
+@media screen and (min-width: 1024px) {
+  #restaurants-list li {
+    width: 230px;
+    float: left;
   }
 }
 

@@ -99,7 +99,7 @@ fillReviewsHTML = (reviews = self.restaurant.reviews) => {
   var count = 0;
   var index = parseInt(document.getElementById('restaurant-hours').getAttribute('tabindex')) + 1;
   const container = document.getElementById('reviews-container');
-  const title = document.createElement('h2');
+  const title = document.createElement('h3');
   title.innerHTML = 'Reviews';
   container.appendChild(title);
   title.setAttribute('tabindex', index);

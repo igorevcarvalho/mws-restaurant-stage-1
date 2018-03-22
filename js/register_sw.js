@@ -1,4 +1,4 @@
-navigator.serviceWorker.register('../sw.js').then(function(reg) {  
+navigator.serviceWorker.register('/sw.js').then(function(reg) {  
   console.log('Service worker registered.');
   if (!navigator.serviceWorker.controller) return;  
   if (reg.waiting) navigator.serviceWorker.controller.postMessage({action: 'skipWaiting'});  

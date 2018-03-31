@@ -1,53 +1,79 @@
+let restaurantId = undefined;
+const port = 1337; // Change this to match the port defined in the nodejs project
+const baseUrl = `http://localhost:${port}/restaurants`;
 /**
  * Common database helper functions.
  */
 class DBHelper {
-
   /**
    * Database URL.
    * Change this to restaurants.json file location on your server.
    */
-  static get DATABASE_URL() {
-    const port = 8000; // Change this to your server port
-    return `http://localhost:${port}/data/restaurants.json`;
+  static get RESTAURANTS_URL() {
+    var url = baseUrl;
+    if(restaurantId != undefined) url += `/${restaurantId}`;
+    return url;
   }
 
   /**
    * Fetch all restaurants.
    */
   static fetchRestaurants(callback) {
-    let xhr = new XMLHttpRequest();
-    xhr.open('GET', DBHelper.DATABASE_URL);
-    xhr.onload = () => {
-      if (xhr.status === 200) { // Got a success response from server!
-        const json = JSON.parse(xhr.responseText);
-        const restaurants = json.restaurants;
-        callback(null, restaurants);
-      } else { // Oops!. Got an error from server.
-        const error = (`Request failed. Returned status of ${xhr.status}`);
-        callback(error, null);
-      }
-    };
-    xhr.send();
+    restaurantId = undefined;
+    DBHelper.fetchRestaurantInfo(callback);
   }
 
   /**
    * Fetch a restaurant by its ID.
    */
   static fetchRestaurantById(id, callback) {
-    // fetch all restaurants with proper error handling.
-    DBHelper.fetchRestaurants((error, restaurants) => {
-      if (error) {
-        callback(error, null);
-      } else {
-        const restaurant = restaurants.find(r => r.id == id);
-        if (restaurant) { // Got the restaurant
-          callback(null, restaurant);
-        } else { // Restaurant does not exist in the database
-          callback('Restaurant does not exist', null);
-        }
+    restaurantId = id;
+    DBHelper.fetchRestaurantInfo(callback);
+  }
+
+  /**
+   * Abstract method for fetching restaurant info.
+   */
+  static fetchRestaurantInfo(callback) {
+    return fetch(DBHelper.RESTAURANTS_URL)
+      .then(function(response) {
+        return response.json();
+    })
+    .then(function(jsonRestaurant) {
+      var array;
+      if(Array.isArray(jsonRestaurant)){
+        array = jsonRestaurant;
       }
-    });
+      else{
+        array = [];
+        array.push(jsonRestaurant);
+      }
+      var clientMsg = sendMessageToSW({command:'put', restaurants:array, url:baseUrl});
+      callback(null, jsonRestaurant);
+    })
+    .catch(function(error) {
+      //Let's try to fetch from IndexedDB
+      var data = {};
+      if(restaurantId == undefined){
+        data.command = 'getAll'
+      }
+      else{
+        data.command = 'get',
+        data.url = DBHelper.RESTAURANTS_URL;
+      }
+      sendMessageToSW(data).then(function(result){
+        /*
+        let newArr = result.data.map((val, index, arr) => {
+          return val.restaurant;
+        });
+        console.log(newArr);
+        */
+        const restaurants = result.data.map((v, i) => result.data[i].restaurant)
+        //console.log(restaurants);
+        
+        callback(null, restaurants);
+      });
+    })
   }
 
   /**
@@ -113,9 +139,12 @@ class DBHelper {
         callback(error, null);
       } else {
         // Get all neighborhoods from all restaurants
+        //console.log(restaurants);
         const neighborhoods = restaurants.map((v, i) => restaurants[i].neighborhood)
+        //console.log(neighborhoods);
         // Remove duplicates from neighborhoods
         const uniqueNeighborhoods = neighborhoods.filter((v, i) => neighborhoods.indexOf(v) == i)
+        //console.log(uniqueNeighborhoods);
         callback(null, uniqueNeighborhoods);
       }
     });
@@ -150,7 +179,10 @@ class DBHelper {
    * Restaurant image URL.
    */
   static imageUrlForRestaurant(restaurant) {
-    return (`/img/${restaurant.photograph}`);
+    if (restaurant.photograph != undefined) 
+      return (`/img/${restaurant.photograph}.jpg`);
+    else
+      return (`/img/${restaurant.id}.jpg`);
   }
 
   /**

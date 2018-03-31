@@ -34,6 +34,7 @@ fetchRestaurantFromURL = (callback) => {
     callback(error, null);
   } else {
     DBHelper.fetchRestaurantById(id, (error, restaurant) => {
+      console.log(restaurant);
       self.restaurant = restaurant;
       if (!restaurant) {
         console.error(error);
@@ -136,18 +137,22 @@ createReviewHTML = (review, index) => {
   li.setAttribute('tabindex', index);
 
   const name = document.createElement('p');
+  name.setAttribute('id', `review-name-${index}`);
   name.innerHTML = review.name;
   li.appendChild(name);
 
   const date = document.createElement('p');
+  date.setAttribute('id', `review-date-${index}`);
   date.innerHTML = review.date;
   li.appendChild(date);
 
   const rating = document.createElement('p');
+  rating.setAttribute('id', `review-rating-${index}`);
   rating.innerHTML = `Rating: ${review.rating}`;
   li.appendChild(rating);
 
   const comments = document.createElement('p');
+  comments.setAttribute('id', `review-comments-${index}`);
   comments.innerHTML = review.comments;
   li.appendChild(comments);
   

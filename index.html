@@ -4,7 +4,13 @@
 <head>
   <!-- Added for fully responsive web -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Added brand color -->
+  <meta name="theme-color" content="#3397DB">
+  <!-- Manifest file -->
+  <link rel="manifest" href="/manifest.json">
+  <!-- Normalize.css for better cross-browser consistency -->
   <link rel="stylesheet" src="//normalize-css.googlecode.com/svn/trunk/normalize.css" />
+  <!-- Main CSS file -->
   <link rel="stylesheet" href="css/styles.css">
   <title>Restaurant Reviews</title>
 </head>
@@ -41,18 +47,22 @@
     </section>
     <!-- End restaurant list -->
   </main>
-
-  <script type="application/javascript" charset="utf-8" src="js/dbhelper.js"></script>
-  <script type="application/javascript" charset="utf-8" src="js/main.js"></script>
-  <!-- Serviceworker javascript file -->
-  <script type="text/javascript" src="js/register_sw.js"></script>
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAeyrDaUdSBVnbSnTT_iAgxs3N0k8D0DRQ&libraries=places&callback=initMap"></script>
-
-
   <footer id="footer" role="contentinfo">
     Copyright (c) 2017 <a href="/"><strong>Restaurant Reviews</strong></a> All Rights Reserved.
   </footer>
 
+  <!-- Beginning scripts -->
+  <!-- Serviceworker javascript file -->
+  <script type="text/javascript" src="register_sw.js"></script>
+  <!-- Database helpers -->
+  <script type="text/javascript" src="js/dbhelper.js"></script>
+  <!-- Main javascript file -->
+  <script type="text/javascript" src="js/main.js"></script>
+  
+
+  <!-- Google Maps -->
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAeyrDaUdSBVnbSnTT_iAgxs3N0k8D0DRQ&libraries=places&callback=initMap"></script>
+  <!-- End scripts -->
 </body>
 
 </html>

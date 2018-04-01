@@ -82,14 +82,14 @@ function getRestaurant(url, callback) {
     //success callback
     dbRequest.onsuccess = function(e) {
       //console.log('Restaurant Get onsuccess event');
-      //console.log(dbRequest);
-      resolve({data:dbRequest.result, success:true});
+      //console.log(dbRequest.result.restaurant);
+      resolve({data:dbRequest.result.restaurant, success:true});
     };
          
     //error callback
     dbRequest.onerror = function(e) {
       console.error('Restaurant Get onerror event ' + e.error);
-      resolve({error:e.error, success:false});
+      resolve({data:null, error:e.error, success:false});
     };
   });
   return promise;
@@ -132,18 +132,29 @@ self.addEventListener('install', function(event) {
       return cache.addAll([
         '/',
         '/index.html',
-        '/restaurant.html',
-        '/css/styles.css',
-        '/img/1.jpg',
-        '/img/2.jpg',
-        '/img/3.jpg',
-        '/img/4.jpg',
-        '/img/5.jpg',
-        '/img/6.jpg',
-        '/img/7.jpg',
-        '/img/8.jpg',
-        '/img/9.jpg',
-        '/img/10.jpg',
+        '/restaurant.html?id=1',
+        '/restaurant.html?id=2',
+        '/restaurant.html?id=3',
+        '/restaurant.html?id=4',
+        '/restaurant.html?id=5',
+        '/restaurant.html?id=6',
+        '/restaurant.html?id=7',
+        '/restaurant.html?id=8',
+        '/restaurant.html?id=9',
+        '/restaurant.html?id=10',
+        '/css/base.css',
+        '/css/index.css',
+        '/css/restaurant.css',
+        '/img/1.webp',
+        '/img/2.webp',
+        '/img/3.webp',
+        '/img/4.webp',
+        '/img/5.webp',
+        '/img/6.webp',
+        '/img/7.webp',
+        '/img/8.webp',
+        '/img/9.webp',
+        '/img/10.webp',
         '/manifest.json',
         '/icons/icon-128.png',
         '/icons/icon-256.png',
@@ -216,18 +227,19 @@ self.addEventListener('message', function(event) {
     var url = event.data.url;
     switch(cmd){
       case 'put':
-        var result = AsyncAddRestaurants(data, url);
-        event.ports[0].postMessage(JSON.parse(JSON.stringify(result)));
+        AsyncAddRestaurants(data, url).then(function(result){
+          event.ports[0].postMessage(JSON.parse(JSON.stringify(result)));
+        })
         break;
       case 'get':
-        var result = AsyncGetRestaurant(url);
-        event.ports[0].postMessage(JSON.parse(JSON.stringify(result)));
+        AsyncGetRestaurant(url).then(function(result){
+          event.ports[0].postMessage(JSON.parse(JSON.stringify(result)));
+        })
         break;
       case 'getAll':
         AsyncGetAllRestaurants().then(function(result){
           event.ports[0].postMessage(JSON.parse(JSON.stringify(result)));
         })
-        
         break;
     }
   }

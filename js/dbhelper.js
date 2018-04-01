@@ -62,17 +62,18 @@ class DBHelper {
         data.url = DBHelper.RESTAURANTS_URL;
       }
       sendMessageToSW(data).then(function(result){
-        /*
-        let newArr = result.data.map((val, index, arr) => {
-          return val.restaurant;
-        });
-        console.log(newArr);
-        */
-        const restaurants = result.data.map((v, i) => result.data[i].restaurant)
-        //console.log(restaurants);
-        
-        callback(null, restaurants);
-      });
+        if(data.command == 'getAll'){
+          const restaurants = result.data.map((v, i) => result.data[i].restaurant)
+          //console.log(restaurants);
+          callback(null, restaurants);
+        }
+        else{
+          callback(null, result.data);
+        }
+      }).catch(function(){
+        callback(error, null);
+      })
+      ;
     })
   }
 
@@ -180,9 +181,9 @@ class DBHelper {
    */
   static imageUrlForRestaurant(restaurant) {
     if (restaurant.photograph != undefined) 
-      return (`/img/${restaurant.photograph}.jpg`);
+      return (`/img/${restaurant.photograph}.webp`);
     else
-      return (`/img/${restaurant.id}.jpg`);
+      return (`/img/${restaurant.id}.webp`);
   }
 
   /**

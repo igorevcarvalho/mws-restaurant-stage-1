@@ -107,7 +107,7 @@
   margin: 0 0 10px;
 }
 
-#reviews-list li p:nth-child(1) {
+#reviews-list li p.name {
   font-weight: bold;
   color: #fff;
   padding: 10px 0px 10px 0px;
@@ -116,7 +116,7 @@
   vertical-align: top;
 }
 
-#reviews-list li p:nth-child(2) {
+#reviews-list li p.date {
   color: silver;
   padding: 10px 0px 10px 0px;
   display: inline-block;
@@ -125,7 +125,7 @@
   vertical-align: top;
 }
 
-#reviews-list li p:nth-child(3) {
+#reviews-list li p.rating {
   background-color: #000;
   border-radius: 5px;
   color: #fff;

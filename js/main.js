@@ -179,7 +179,31 @@ createRestaurantHTML = (restaurant) => {
   more.setAttribute('tabindex',index);
   more.setAttribute('role', `button`);
   index++;
-  li.append(more)
+  li.append(more);
+
+  const newReview = document.createElement('a');
+  newReview.innerHTML = 'New Review';
+  newReview.href = DBHelper.urlForNewReview(restaurant);
+  newReview.setAttribute('aria-label', `Click to add a review of ${restaurant.name}`);
+  newReview.setAttribute('tabindex',index);
+  newReview.setAttribute('role', `button`);
+  index++;
+  li.append(newReview);
+
+  const favorite = document.createElement('a');
+  if(restaurant.is_favorite){
+    favorite.innerHTML = 'Remove from favorites';
+    favorite.setAttribute('aria-label', `Click to remove ${restaurant.name} from favorites`);
+  }
+  else{
+    favorite.innerHTML = 'Add to favorites';
+    favorite.setAttribute('aria-label', `Click to add ${restaurant.name} to favorites`);
+  }
+  favorite.href = `javascript:toggleFavorite(${restaurant.id},${!restaurant.is_favorite});`;
+  favorite.setAttribute('tabindex',index);
+  favorite.setAttribute('role', `button`);
+  index++;
+  li.append(favorite);
 
   return li
 }
@@ -198,9 +222,19 @@ addMarkersToMap = (restaurants = self.restaurants) => {
   });
 }
 
-document.onkeydown = CaptureTabKeyEventsMain;
+document.onkeydown = captureTabKeyEventsMain;
 
-function CaptureTabKeyEventsMain(evt) {
+/**
+ * Function that updates the IsFavorite information on the selected restaurant
+ */
+function toggleFavorite(restaurantId, newIsFavorite){
+  updateRestaurants();
+}
+
+/**
+ * Function that captures and handles tab and inverse tab clicks
+ */
+function captureTabKeyEventsMain(evt) {
   var evt = (evt) ? evt : ((event) ? event : null);
   var tabKey = 9;
   var activeElemId = document.activeElement.id;

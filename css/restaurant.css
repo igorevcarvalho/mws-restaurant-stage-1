@@ -138,3 +138,71 @@
 #restaurant-hours td {
   color: #666;
 }
+
+/* ====================== Restaurant Reviews ====================== */
+.row{
+  margin-bottom: 15px;
+}
+
+.review-label{
+  font-size: 1.2em;
+  margin: 0 0 11px 0;
+}
+
+.review-input{
+  width: 100%;
+  padding: 12px 10px;
+  box-sizing: border-box;
+  border: 3px solid #ccc;
+  -webkit-transition: 0.5s;
+  transition: 0.5s;
+  outline: none;
+}
+
+.review-input:focus, .review-input:hover {
+  border: 3px solid #555;
+}
+
+.review-select {
+  background-color: white;
+  border: 1px solid #fff;
+  font-family: Arial,sans-serif;
+  font-size: 11pt;
+  height: 35px;
+  letter-spacing: 0;
+  margin: 10px 0 10px 0;
+  padding: 0 10px;
+  width: 100%;
+  -webkit-transition: 0.5s;
+  transition: 0.5s;
+}
+
+.review-select:focus, .review-select:hover, .review-select:focus {
+  border: 3px solid #555;
+  outline-color: white;
+  outline: #000;
+}
+
+#review-submit{
+  width: 100%;
+  background-color: #444;
+  border-bottom: 3px solid #eee;
+  color: #fff;
+  display: inline-block;
+  font-size: 10pt;
+  margin: 15px 0 0;
+  padding: 8px 0 10px 0;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+#review-result p.failure{
+  font-size: 1.2em;
+  color: red;
+}
+
+#review-result p.success{
+  font-size: 1.2em;
+  color: green;
+}

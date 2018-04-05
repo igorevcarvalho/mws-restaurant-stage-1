@@ -1,17 +1,28 @@
 let restaurantId = undefined;
+let isRestaurantFavorite = undefined;
 const port = 1337; // Change this to match the port defined in the nodejs project
-const baseUrl = `http://localhost:${port}/restaurants`;
+const baseRestaurantUrl = `http://localhost:${port}/restaurants`;
+const baseReviewUrl = `http://localhost:${port}/reviews`;
 /**
  * Common database helper functions.
  */
 class DBHelper {
   /**
-   * Database URL.
-   * Change this to restaurants.json file location on your server.
+   * Restaurants URL.
    */
   static get RESTAURANTS_URL() {
-    var url = baseUrl;
+    var url = baseRestaurantUrl;
     if(restaurantId != undefined) url += `/${restaurantId}`;
+    if(isRestaurantFavorite != undefined) url += `/?is_favorite=${isRestaurantFavorite}`;
+    return url;
+  }
+
+  /**
+   * Reviews URL.
+   */
+  static get REVIEWS_URL() {
+    var url = baseReviewUrl;
+    
     return url;
   }
 
@@ -20,6 +31,7 @@ class DBHelper {
    */
   static fetchRestaurants(callback) {
     restaurantId = undefined;
+    isRestaurantFavorite = undefined;
     DBHelper.fetchRestaurantInfo(callback);
   }
 
@@ -28,8 +40,49 @@ class DBHelper {
    */
   static fetchRestaurantById(id, callback) {
     restaurantId = id;
+    isRestaurantFavorite = undefined;
     DBHelper.fetchRestaurantInfo(callback);
   }
+
+  static postRestaurant(id, isFavorite){
+    restaurantId = id;
+    isRestaurantFavorite = isFavorite;
+  }
+
+  /**
+   * Abstract method for posting review info.
+   */
+  static postReviewInfo(dbReview, callback){
+    //First, we'll try to update the local db info
+    var data = {
+      command:'addReview',
+      review: dbReview
+    };
+
+    sendMessageToSW(data).then(function(result){
+      return fetch(DBHelper.REVIEWS_URL,
+        {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers: {
+            'content-type': 'application/json'
+          },
+        }
+      ).then(function(response) {
+        return response.json();
+      }).then(function(jsonResponse) {
+        console.log('jsonResponse:');
+        console.log(jsonResponse);
+        callback(null, jsonResponse);
+      }).catch(function(){
+        //Here, we'll warn the user that wasn't possible to commit the changes to the server
+        callback(error, null);
+      })
+    }).catch(function(){
+      //Here, we'll warn the user that wasn't possible to commit the changes to the local db
+      callback(error, null);
+    })
+  } 
 
   /**
    * Abstract method for fetching restaurant info.
@@ -48,7 +101,7 @@ class DBHelper {
         array = [];
         array.push(jsonRestaurant);
       }
-      var clientMsg = sendMessageToSW({command:'put', restaurants:array, url:baseUrl});
+      var clientMsg = sendMessageToSW({command:'put', restaurants:array, url:baseRestaurantUrl});
       callback(null, jsonRestaurant);
     })
     .catch(function(error) {
@@ -167,6 +220,13 @@ class DBHelper {
         callback(null, uniqueCuisines);
       }
     });
+  }
+
+  /**
+   * New review page URL.
+   */
+  static urlForNewReview(restaurant) {
+    return (`./review.html?id=${restaurant.id}`);
   }
 
   /**

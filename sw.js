@@ -142,6 +142,16 @@ self.addEventListener('install', function(event) {
         '/restaurant.html?id=8',
         '/restaurant.html?id=9',
         '/restaurant.html?id=10',
+        '/review.html?id=1',
+        '/review.html?id=2',
+        '/review.html?id=3',
+        '/review.html?id=4',
+        '/review.html?id=5',
+        '/review.html?id=6',
+        '/review.html?id=7',
+        '/review.html?id=8',
+        '/review.html?id=9',
+        '/review.html?id=10',
         '/css/base.css',
         '/css/index.css',
         '/css/restaurant.css',
@@ -164,6 +174,7 @@ self.addEventListener('install', function(event) {
         '/js/main.js',
         '/register_sw.js',
         '/js/restaurant_info.js',
+        '/js/restaurant_review.js',
       ]);
     })
     /*

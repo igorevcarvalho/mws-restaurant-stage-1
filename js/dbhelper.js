@@ -1,8 +1,10 @@
-let restaurantId = undefined;
-let isRestaurantFavorite = undefined;
-const port = 1337; // Change this to match the port defined in the nodejs project
-const baseRestaurantUrl = `http://localhost:${port}/restaurants`;
-const baseReviewUrl = `http://localhost:${port}/reviews`;
+let _restaurant = undefined;
+let _restaurantId = undefined;
+let _isRestaurantFavorite = undefined;
+let _loadFullInfo = undefined;
+const _port = 1337; // Change this to match the port defined in the nodejs project
+const _baseRestaurantUrl = `http://localhost:${_port}/restaurants`;
+const _baseReviewUrl = `http://localhost:${_port}/reviews`;
 /**
  * Common database helper functions.
  */
@@ -11,9 +13,9 @@ class DBHelper {
    * Restaurants URL.
    */
   static get RESTAURANTS_URL() {
-    var url = baseRestaurantUrl;
-    if(restaurantId != undefined) url += `/${restaurantId}`;
-    if(isRestaurantFavorite != undefined) url += `/?is_favorite=${isRestaurantFavorite}`;
+    var url = _baseRestaurantUrl;
+    if(_restaurantId != undefined) url += `/${_restaurantId}`;
+    if(_isRestaurantFavorite != undefined) url += `/?is_favorite=${_isRestaurantFavorite}`;
     return url;
   }
 
@@ -21,8 +23,8 @@ class DBHelper {
    * Reviews URL.
    */
   static get REVIEWS_URL() {
-    var url = baseReviewUrl;
-    
+    var url = _baseReviewUrl;
+    if(_restaurantId != undefined) url += `/?restaurant_id=${_restaurantId}`;
     return url;
   }
 
@@ -30,101 +32,182 @@ class DBHelper {
    * Fetch all restaurants.
    */
   static fetchRestaurants(callback) {
-    restaurantId = undefined;
-    isRestaurantFavorite = undefined;
+    _restaurantId = undefined;
+    _isRestaurantFavorite = undefined;
+    _loadFullInfo = undefined;
     DBHelper.fetchRestaurantInfo(callback);
   }
 
   /**
    * Fetch a restaurant by its ID.
    */
-  static fetchRestaurantById(id, callback) {
-    restaurantId = id;
-    isRestaurantFavorite = undefined;
+  static fetchRestaurantById(id, fullInfo, callback) {
+    _restaurantId = id;
+    _isRestaurantFavorite = undefined;
+    _loadFullInfo = fullInfo;
     DBHelper.fetchRestaurantInfo(callback);
   }
 
-  static postRestaurant(id, isFavorite){
-    restaurantId = id;
-    isRestaurantFavorite = isFavorite;
+  static postRestaurantInfoByIdAndIsFavorite(restaurant, callback){
+    _restaurant = restaurant;
+    _restaurantId = restaurant.id;
+    _isRestaurantFavorite = restaurant.is_favorite;
+    _loadFullInfo = undefined;
+    DBHelper.postRestaurantInfo(callback);
   }
 
   /**
    * Abstract method for posting review info.
    */
-  static postReviewInfo(dbReview, callback){
+  static postReviewInfo(id, dbReview, callback){
     //First, we'll try to update the local db info
+    var reviewArray;
+    if(Array.isArray(dbReview)){
+      reviewArray = dbReview;
+    }
+    else{
+      reviewArray = new Array();
+      reviewArray.push(dbReview);
+    }
     var data = {
-      command:'addReview',
-      review: dbReview
+      command:'AddReviews',
+      reviews: reviewArray
     };
-
-    sendMessageToSW(data).then(function(result){
-      return fetch(DBHelper.REVIEWS_URL,
+    //sendMessageToSW(data).then(function(result){
+      return fetch(_baseReviewUrl,
         {
           method: 'POST',
-          body: JSON.stringify(data),
+          body: JSON.stringify( dbReview ),
           headers: {
             'content-type': 'application/json'
           },
         }
       ).then(function(response) {
+        //console.log('Request sent');
         return response.json();
       }).then(function(jsonResponse) {
         console.log('jsonResponse:');
         console.log(jsonResponse);
         callback(null, jsonResponse);
-      }).catch(function(){
+      }).catch(function(error){
         //Here, we'll warn the user that wasn't possible to commit the changes to the server
-        callback(error, null);
+        console.error(error);
+        var requestData = {
+          tableRecordId: 'review_'+_restaurantId, 
+          requestUrl: _baseReviewUrl,
+          requestInfo: dbReview,
+        };
+        sendMessageToSW({command:'AddFailedRequest', failedRequest: requestData})
+        .then(function(msgResult){
+          callback(null, msgResult);
+        })
+        .catch(function(error){
+          callback(error, null);
+        })
       })
-    }).catch(function(){
+      /*
+    }).catch(function(errorMsg){
       //Here, we'll warn the user that wasn't possible to commit the changes to the local db
-      callback(error, null);
-    })
+      console.error(errorMsg);
+      callback(errorMsg, null);
+    }) 
+    */
   } 
+
+  /**
+   * Abstract method for posting restaurant info.
+   */
+  static postRestaurantInfo(callback) {
+    return fetch(DBHelper.RESTAURANTS_URL,
+      {
+        method: 'POST'
+      }
+    ).then(function(fetchResponse) {
+        return fetchResponse.json();
+    }).then(function(jsonResponse) {
+      callback(null, jsonResponse);
+    }).catch(function(error) {
+      //Here we'll update the info locally and keep a record of the failed request to retry when the
+      //connection is restablished
+      var restaurantArray= [];
+      restaurantArray.push(_restaurant);
+      var requestData = {
+        tableRecordId: 'restaurant_'+_restaurantId,
+        requestUrl: DBHelper.RESTAURANTS_URL,
+        requestInfo: {},
+      };
+      sendMessageToSW({command:'AddFailedRequest', failedRequest: requestData});
+      sendMessageToSW({command:'AddRestaurants', restaurants:restaurantArray})
+      callback(null, {});
+    })
+  }
+
+  
 
   /**
    * Abstract method for fetching restaurant info.
    */
   static fetchRestaurantInfo(callback) {
-    return fetch(DBHelper.RESTAURANTS_URL)
-      .then(function(response) {
-        return response.json();
-    })
-    .then(function(jsonRestaurant) {
-      var array;
-      if(Array.isArray(jsonRestaurant)){
-        array = jsonRestaurant;
+    var _reviewUrl = DBHelper.REVIEWS_URL;
+    if(_loadFullInfo != true){
+      _reviewUrl = undefined;
+    }
+    sendMessageToSW(
+      {
+        command:'FetchRestaurantFromServer', 
+        restaurantUrl: DBHelper.RESTAURANTS_URL,
+        reviewUrl: _reviewUrl
+      }
+    )
+    .then(function(jsonObject) {
+      if(!jsonObject.success){
+        throw 'FetchRestaurantFromServer Error';
+      }
+      var restaurantArray;
+      var reviewArray;
+      var restaurant= jsonObject.restaurants;
+      if(Array.isArray(restaurant)){
+        restaurantArray = restaurant;
       }
       else{
-        array = [];
-        array.push(jsonRestaurant);
+        restaurantArray = [];
+        restaurantArray.push(restaurant);
       }
-      var clientMsg = sendMessageToSW({command:'put', restaurants:array, url:baseRestaurantUrl});
-      callback(null, jsonRestaurant);
+      sendMessageToSW({command:'AddRestaurants', restaurants:restaurantArray});
+      if(_loadFullInfo == true){
+        sendMessageToSW({command:'AddReviews', reviews:jsonObject.reviews});
+        restaurant.reviews = jsonObject.reviews;
+      }
+      callback(null, restaurant);
     })
     .catch(function(error) {
       //Let's try to fetch from IndexedDB
+      console.error(error);
       var data = {};
-      if(restaurantId == undefined){
-        data.command = 'getAll'
+      if(_restaurantId == undefined){
+        data.command = 'GetAllRestaurants'
+      }
+      else if(_loadFullInfo == true){
+        data.command = 'GetRestaurantWithReviews',
+        data.id = _restaurantId;
       }
       else{
-        data.command = 'get',
-        data.url = DBHelper.RESTAURANTS_URL;
+        data.command = 'GetRestaurant',
+        data.id = _restaurantId;
       }
       sendMessageToSW(data).then(function(result){
-        if(data.command == 'getAll'){
-          const restaurants = result.data.map((v, i) => result.data[i].restaurant)
-          //console.log(restaurants);
+        if(data.command == 'GetAllRestaurants'){
+          const restaurants = result.data;
+          console.log(restaurants);
           callback(null, restaurants);
         }
         else{
+          console.log(result.data);
           callback(null, result.data);
         }
-      }).catch(function(){
-        callback(error, null);
+      }).catch(function(errorMsg){
+        console.error(errorMsg);
+        callback(errorMsg, null);
       })
       ;
     })

@@ -5,18 +5,20 @@ var map;
  * Initialize Google map, called from HTML.
  */
 window.initMap = () => {
-  fetchRestaurantFromURL((error, restaurant) => {
-    if (error) { // Got an error!
-      console.error(error);
-    } else {
-      self.map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 16,
-        center: restaurant.latlng,
-        scrollwheel: false
-      });
-      fillBreadcrumb();
-      DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
-    }
+  sendMessageToSW({command:'RetryFailedRequests'}).then(function(){
+    fetchRestaurantFromURL((error, restaurant) => {
+      if (error) { // Got an error!
+        console.error(error);
+      } else {
+        self.map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 16,
+          center: restaurant.latlng,
+          scrollwheel: false
+        });
+        fillBreadcrumb();
+        DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
+      }
+    });
   });
 }
 
@@ -28,18 +30,23 @@ fetchRestaurantFromURL = (callback) => {
     callback(null, self.restaurant)
     return;
   }
-  const id = getParameterByName('id');
+  const id = parseInt(getParameterByName('id'));
   if (!id) { // no id found in URL
     error = 'No restaurant id in URL'
     callback(error, null);
-  } else {
-    DBHelper.fetchRestaurantById(id, (error, restaurant) => {
+  } else if (self.restaurant != undefined){
+    console.log('Restaurant already fetched');
+    callback(null, self.restaurant);
+  } else{
+    DBHelper.fetchRestaurantById(id, false, (error, restaurant) => {
       console.log(restaurant);
-      self.restaurant = restaurant;
-      if (!restaurant) {
-        console.error(error);
+      if(!self.restaurant && restaurant)
+        self.restaurant = restaurant;
+      if (!self.restaurant) {
+        //console.error(error);
         return;
       }
+      
       fillRestaurantHTML();
       callback(null, restaurant)
     });
@@ -138,7 +145,7 @@ function submitReview(){
   const submitBtn = document.getElementById('review-submit');
   submitBtn.setAttribute('disabled','disabled');
 
-  const id = getParameterByName('id');
+  const id = parseInt(getParameterByName('id'));
   const txtNameCtrl = document.getElementById('review-name');
   const selectRatingCtrl = document.getElementById('review-rating');
   const txtCommentsCtrl = document.getElementById('review-comments');
@@ -147,7 +154,7 @@ function submitReview(){
   while (reviewResultRow.firstChild) {
     reviewResultRow.removeChild(reviewResultRow.firstChild);
   }
-  console.log(`${txtCommentsCtrl.value};${selectRatingCtrl.value};${txtCommentsCtrl.value}`);
+  //console.log(`${txtCommentsCtrl.value};${selectRatingCtrl.value};${txtCommentsCtrl.value}`);
 
   if(txtNameCtrl.value == '' && txtCommentsCtrl.value == ''){
     txtNameCtrl.focus();
@@ -166,13 +173,16 @@ function submitReview(){
     submitBtn.removeAttribute('disabled');
   }
   else{
+    var now = new Date();
     var dbReview = {
       restaurant_id: id,
       name: txtNameCtrl.value,
-      rating: selectRatingCtrl.value,
+      createdAt: now,
+      updatedAt: now,
+      rating: parseInt(selectRatingCtrl.value),
       comments: txtCommentsCtrl.value
     };
-    DBHelper.postReviewInfo(dbReview, (error, result) => {
+    DBHelper.postReviewInfo(id, dbReview, (error, result) => {
       if (error) { // Got an error
         reviewResultRow.appendChild(getOperationMessage('failure', error));
       } else {

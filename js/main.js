@@ -9,8 +9,15 @@ var index = 0
  * Fetch neighborhoods and cuisines as soon as the page is loaded.
  */
 document.addEventListener('DOMContentLoaded', (event) => {
-  fetchNeighborhoods();
-  fetchCuisines();
+  sendMessageToSW({command:'RetryFailedRequests'}).then(function(){
+    console.log('Fetching data...');
+    fetchNeighborhoods();
+    fetchCuisines();
+  }).catch(function(error){
+    console.log('error fetching data...');
+  });
+  //fetchNeighborhoods();
+  //fetchCuisines();
 });
 
 /**
@@ -190,6 +197,7 @@ createRestaurantHTML = (restaurant) => {
   index++;
   li.append(newReview);
 
+  restaurant.is_favorite = restaurant.is_favorite === true || restaurant.is_favorite === "true";
   const favorite = document.createElement('a');
   if(restaurant.is_favorite){
     favorite.innerHTML = 'Remove from favorites';
@@ -199,7 +207,7 @@ createRestaurantHTML = (restaurant) => {
     favorite.innerHTML = 'Add to favorites';
     favorite.setAttribute('aria-label', `Click to add ${restaurant.name} to favorites`);
   }
-  favorite.href = `javascript:toggleFavorite(${restaurant.id},${!restaurant.is_favorite});`;
+  favorite.href = `javascript:toggleFavorite(${restaurant.id});`;
   favorite.setAttribute('tabindex',index);
   favorite.setAttribute('role', `button`);
   index++;
@@ -227,8 +235,17 @@ document.onkeydown = captureTabKeyEventsMain;
 /**
  * Function that updates the IsFavorite information on the selected restaurant
  */
-function toggleFavorite(restaurantId, newIsFavorite){
-  updateRestaurants();
+function toggleFavorite(id){
+  var restaurantArray = self.restaurants.filter(r => r.id == id);
+  var restaurant = restaurantArray[0];
+  restaurant.is_favorite = !restaurant.is_favorite;
+  DBHelper.postRestaurantInfoByIdAndIsFavorite(restaurant, (error, result) => {
+    if (error) { // Got an error!
+      console.error(error);
+    } else {
+      updateRestaurants();
+    }
+  })
 }
 
 /**

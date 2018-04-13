@@ -2,7 +2,7 @@
 ---
 #### _Three Stage Course Material Project - Restaurant Reviews_
 
-## Project Overview: Stage 2
+## Project Overview: Stage 3
 
 ### What do I do from here?
 
@@ -12,7 +12,7 @@ In a terminal, check the version of Python you have: `python -V`. If you have Py
 
 2. With your server running, visit the site: `http://localhost:8000`, and look around for a bit to see what the current experience looks like.
 
-3. Run the server from `https://github.com/udacity/mws-restaurant-stage-2`
+3. Run the server from `https://github.com/udacity/mws-restaurant-stage-3`
 
 
 

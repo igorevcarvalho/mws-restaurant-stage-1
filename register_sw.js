@@ -17,8 +17,9 @@ if ('serviceWorker' in navigator) {
 }
 
 function sendMessageToSW(message) {
+  //console.log(message);
   return new Promise(function(resolve, reject) {
-    if(!navigator.serviceWorker.controller) reject(null);
+    if(!navigator.serviceWorker.controller) reject('ServiceWorker without controller.');
     const messageChannel = new MessageChannel();
     messageChannel.port1.onmessage = function(event) {
       console.log('Received direct message from service worker');
